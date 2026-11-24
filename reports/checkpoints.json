@@ -1,0 +1,142 @@
+{
+  "format_version": 1,
+  "loss_mode": "multinomial_bce",
+  "training_detection_positive": "raw count > 0",
+  "feature_key": "obsm/he",
+  "panel_size": 313,
+  "model_spec": {
+    "feature_dim": 1024,
+    "gene_count": 313,
+    "hidden_dim": 256,
+    "dropout": 0.1,
+    "score_mode": "count"
+  },
+  "detected_selection": "max source spatial validation macro F_beta, beta=1.2",
+  "neutral_selection": "min source calibration FP+2FN; count=1 ignored; ties: fewer FP, then fewer selected genes",
+  "comparison": "score >= threshold",
+  "source_calibration_record": "experiments/context_greedy_comparison_20261030/original_baseline/calibration_frozen.json",
+  "models": [
+    {
+      "source": "Rep1",
+      "seed": 42,
+      "path": "checkpoints/Rep1/seed_42.pt",
+      "sha256": "7995d40357a1578f3e2e0c70043cf119506805e7016b054cfb540599964621ba",
+      "detected_threshold": 0.22,
+      "neutral_threshold": 0.47626543045043945,
+      "best_epoch": 15,
+      "count_scale": 190.66177313036107,
+      "train_cells": 130921,
+      "validation_cells": 32547,
+      "neutral_calibration_cells": 1024,
+      "source_checkpoint": "outputs/xenium_next_round/ablations/Rep1_to_Rep2/seed_42/multinomial_bce/validation_model.pt"
+    },
+    {
+      "source": "Rep1",
+      "seed": 43,
+      "path": "checkpoints/Rep1/seed_43.pt",
+      "sha256": "875779b23beec53d95c83d777c463525f9b31e7cb9dc045eebbf8c9c1d5b0878",
+      "detected_threshold": 0.23,
+      "neutral_threshold": 0.46904850006103516,
+      "best_epoch": 19,
+      "count_scale": 190.66177313036107,
+      "train_cells": 130921,
+      "validation_cells": 32547,
+      "neutral_calibration_cells": 1024,
+      "source_checkpoint": "outputs/xenium_next_round/ablations/Rep1_to_Rep2/seed_43/multinomial_bce/validation_model.pt"
+    },
+    {
+      "source": "Rep1",
+      "seed": 44,
+      "path": "checkpoints/Rep1/seed_44.pt",
+      "sha256": "6f41c8976e06d090031ef137988171d8ef85ada732c35b0f3479b0e99ba248f4",
+      "detected_threshold": 0.22,
+      "neutral_threshold": 0.4771217703819275,
+      "best_epoch": 13,
+      "count_scale": 190.66177313036107,
+      "train_cells": 130921,
+      "validation_cells": 32547,
+      "neutral_calibration_cells": 1024,
+      "source_checkpoint": "outputs/xenium_next_round/ablations/Rep1_to_Rep2/seed_44/multinomial_bce/validation_model.pt"
+    },
+    {
+      "source": "Rep2",
+      "seed": 42,
+      "path": "checkpoints/Rep2/seed_42.pt",
+      "sha256": "ef87a85e7f5eab54d1c43a9558fe5446e5a1304a009dc82db593d7851965755a",
+      "detected_threshold": 0.22,
+      "neutral_threshold": 0.47845232486724854,
+      "best_epoch": 12,
+      "count_scale": 188.22623098085452,
+      "train_cells": 89055,
+      "validation_cells": 22129,
+      "neutral_calibration_cells": 1024,
+      "source_checkpoint": "outputs/xenium_next_round/ablations/Rep2_to_Rep1/seed_42/multinomial_bce/validation_model.pt"
+    },
+    {
+      "source": "Rep2",
+      "seed": 43,
+      "path": "checkpoints/Rep2/seed_43.pt",
+      "sha256": "43b8f8a2699d8a893af67cdfe73442cee2a4cdd1d2bda2e9e90c2c301e28bd1c",
+      "detected_threshold": 0.22,
+      "neutral_threshold": 0.4745076298713684,
+      "best_epoch": 7,
+      "count_scale": 188.22623098085452,
+      "train_cells": 89055,
+      "validation_cells": 22129,
+      "neutral_calibration_cells": 1024,
+      "source_checkpoint": "outputs/xenium_next_round/ablations/Rep2_to_Rep1/seed_43/multinomial_bce/validation_model.pt"
+    },
+    {
+      "source": "Rep2",
+      "seed": 44,
+      "path": "checkpoints/Rep2/seed_44.pt",
+      "sha256": "e20fd97967d4d4376967acb7ada502dfd832197acbe30935f7416833abf1c1e5",
+      "detected_threshold": 0.23,
+      "neutral_threshold": 0.4733118414878845,
+      "best_epoch": 7,
+      "count_scale": 188.22623098085452,
+      "train_cells": 89055,
+      "validation_cells": 22129,
+      "neutral_calibration_cells": 1024,
+      "source_checkpoint": "outputs/xenium_next_round/ablations/Rep2_to_Rep1/seed_44/multinomial_bce/validation_model.pt"
+    }
+  ],
+  "cohorts": [
+    {
+      "section": "Rep1",
+      "partition": "calibration",
+      "path": "data/cohorts/Rep1_calibration.txt",
+      "cells": 1024,
+      "sha256": "fd23041d7d29a054710dc44bb9fddc5877d879f1004fa6e10d4626a35784fb66",
+      "source_archive": "outputs/hard_region_20261020/data/Rep1/calibration.npz",
+      "source_sha256": "c078b844bf20a1e2a0a8069afcb73b6e2a47788d979eb9afd8bccfd8fa965952"
+    },
+    {
+      "section": "Rep1",
+      "partition": "test",
+      "path": "data/cohorts/Rep1_test.txt",
+      "cells": 4096,
+      "sha256": "aaea493b0f50f163b271df8b177b5e783177053c93d612f9fd0072f729010b65",
+      "source_archive": "outputs/hard_region_20261020/data/Rep1/test.npz",
+      "source_sha256": "f2072d4867e473ea28299993c4c2d01a46e2c6bbaec65e4fc60517fc73d13676"
+    },
+    {
+      "section": "Rep2",
+      "partition": "calibration",
+      "path": "data/cohorts/Rep2_calibration.txt",
+      "cells": 1024,
+      "sha256": "747d04723ccac87c1a134b4ac3fdd038acde11653387c093896000f4e7cb2732",
+      "source_archive": "outputs/hard_region_20261020/data/Rep2/calibration.npz",
+      "source_sha256": "629bfd2b4dcef7b76428d5e251de0b330b4e812f14091bd58e9dff38717ac033"
+    },
+    {
+      "section": "Rep2",
+      "partition": "test",
+      "path": "data/cohorts/Rep2_test.txt",
+      "cells": 4096,
+      "sha256": "24616bc44c9cf10f5bbb7468c21a7ad6ad528726c73d555df1e2b4387f2b454c",
+      "source_archive": "outputs/hard_region_20261020/data/Rep2/test.npz",
+      "source_sha256": "76350e2483780aa674401edc9e94182eda598b70adeedef7d36b94f490659aca"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+# Paths are relative to the directory containing configs/.
+# Supply --rep1 and --rep2 to use files stored elsewhere.
+sections:
+  Rep1:
+    path: data/Rep1.h5ad
+  Rep2:
+    path: data/Rep2.h5ad
+expected_genes: 313
+seeds: [42, 43, 44]
+device: auto
+threads: 8
+split:
+  validation_fraction: 0.2
+  buffer_pixels: 64.0
+  axis: 0
+training:
+  epochs: 40
+  patience: 8
+  batch_size: 2048
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  detection_weight: 1.0
+  beta: 1.2
+  candidates:
+    - name: mlp256
+      hidden_dim: 256
+      dropout: 0.1
+evaluation:
+  top_ks: [10, 30, 60, 100]
+  kendall: true
+  threshold_grid_size: 101
+runs_dir: runs
