@@ -1,0 +1,111 @@
+% !TeX program = xelatex
+\documentclass[UTF8,a4paper,11pt,fontset=fandol]{ctexart}
+\usepackage[margin=25mm]{geometry}
+\usepackage{amsmath,amssymb}
+\pagestyle{plain}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\newcommand{\ind}{\mathbf{1}}
+
+\begin{document}
+\begin{center}
+  {\Large\bfseries STRank+BCE 原方法：单细胞基因检出与计数排序}
+\end{center}
+
+\textbf{数据。}
+同一乳腺癌标本的两张 Xenium 切片 Rep1、Rep2 轮流作为源片和测试片。
+源片按空间位置划分训练集 \(T\) 和验证集 \(V\)。每个细胞提供一对观测
+\[
+  (x_i,y_i)\in\mathbb{R}^{1024}\times\mathbb{N}_0^G,\qquad G=313 .
+\]
+\(x_i\) 是冻结的 UNI 编码器提取的 H\&E 图像特征，
+\(y_{ig}\) 是基因 \(g\) 在细胞 \(i\) 中的原始转录本计数。
+
+\textbf{模型。}
+用 \(T\) 的逐维均值和标准差将 \(x_i\) 标准化为 \(\tilde x_i\)。
+单隐层 MLP 共享一个 256 维表示，接两个线性输出头。
+\[
+  h_i=\operatorname{Dropout}_{0.1}\!\bigl(\operatorname{GELU}(W\tilde x_i+b)\bigr),
+  \qquad r_i=W_rh_i+b_r,\quad a_i=W_ah_i+b_a .
+\]
+计数头预测同一细胞内各基因的计数比例 \(p_{ig}\)，检出头估计检出概率 \(q_{ig}\)。
+\[
+  p_{ig}=\frac{\exp r_{ig}}{\sum_{k=1}^{G}\exp r_{ik}},\qquad
+  q_{ig}=\frac{1}{1+\exp(-a_{ig})}.
+\]
+
+\textbf{监督目标。}
+记 \(n_i=\sum_g y_{ig}\) 为细胞 \(i\) 的面板总计数，\(\bar n_T=|T|^{-1}\sum_{i\in T}n_i\)。
+给定 \(n_i\)，计数头用多项分布描述这些计数在基因间的分配。检出头将单计数视为检出，
+以 \(z_{ig}=\ind\{y_{ig}>0\}\) 为二元标签。两个头分别建模
+\[
+ y_i\mid x_i,n_i\sim\operatorname{Multinomial}(n_i,p_i),\qquad
+ z_{ig}\mid x_i\sim\operatorname{Bernoulli}(q_{ig}).
+\]
+以共享层和两个输出头的权重与偏置为参数 \(\theta\)，最小化两项损失之和。
+\[
+\begin{aligned}
+  &\min_{\theta}\quad \mathcal L_{\rm count}(\theta)+\mathcal L_{\rm det}(\theta),\\[2pt]
+  \mathcal L_{\rm count}
+    &= -\frac{1}{|T|\,\bar n_T}\sum_{i\in T}\sum_{g=1}^{G} y_{ig}\log p_{ig},\\
+  \mathcal L_{\rm det}
+    &= -\frac{1}{|T|\,G}\sum_{i\in T}\sum_{g=1}^{G}
+       \bigl[z_{ig}\log q_{ig}+(1-z_{ig})\log(1-q_{ig})\bigr].
+\end{aligned}
+\]
+第一项是按训练集平均总计数缩放的多项负对数似然（略去常数），第二项是逐基因的二元交叉熵。
+两项监督均取自同一份原始计数 \(y_i\)。
+
+\textbf{优化与预测。}
+每轮打乱训练细胞，以 2048 个细胞为一批反向传播，保持 \(\bar n_T\) 固定。
+用 AdamW 更新 \(\theta\)，学习率 \(10^{-3}\)，权重衰减 \(10^{-4}\)，梯度范数裁剪至 5。
+最多训练 40 轮。在 \(V\) 上逐细胞计算平均精确率（AP），以各细胞 AP 的均值选模，连续 8 轮无改善则早停。
+记所选模型参数为 \(\hat\theta\)。在 \(V\) 上最大化宏平均 \(F_{1.2}\) 得到原阈值 \(\tau_0\)。
+测试时选出 \(\{g:q_{ig}\ge\tau_0\}\)，再按 \(r_{ig}\) 降序排列。
+
+\newpage
+\begin{center}
+  {\Large\bfseries 单计数中性复评：冻结模型，重新选择阈值}
+\end{center}
+
+\textbf{数据与决策变量。}
+从源片空间验证区取 \(1{,}024\) 个细胞组成校准集 \(C\)，在另一张切片上取固定的
+\(4{,}096\) 个细胞组成测试集 \(E\)。两组均有相同的 313 个基因。
+冻结第一页的模型参数 \(\hat\theta\)，由图像特征算出检出分数 \(q_{ig}\)。
+该分数仍是模型对 \(\Pr(y_{ig}>0\mid x_i)\) 的估计。校准数据和入选规则为
+\[
+ \mathcal D_C=\{(q_{ig},y_{ig}):i\in C,\;1\le g\le G\},\qquad
+ s_{ig}(\tau)=\ind\{q_{ig}\ge\tau\}.
+\]
+同一模型的全部细胞和基因共用一个阈值 \(\tau\)。这是复评中唯一待优化的量。
+
+\textbf{单个决策的损失。}
+将原始计数 \(y=0\) 定为阴性，\(y\ge2\) 定为阳性，\(y=1\) 定为中性。
+令 \(s=1\) 表示选入、\(s=0\) 表示未选，定义
+\[
+ \ell(y,s)=\underbrace{\ind\{y=0\}\,s}_{\text{误选代价 }1}
+          +\underbrace{2\,\ind\{y\ge2\}\,(1-s)}_{\text{漏选代价 }2}.
+\]
+因此 \(\ell(1,0)=\ell(1,1)=0\)。选中单计数基因仍计入集合大小，对误选和漏选的贡献均为零。
+系数 2 表示漏掉一个阳性基因的代价相当于误选两个阴性基因。
+
+\textbf{校准目标。}
+对任一细胞集合 \(A\)，记 \(\mathrm{FP}_A(\tau)\)、\(\mathrm{FN}_A(\tau)\)
+为全部细胞与基因上的误选、漏选总数。先对基因求和，再对细胞取平均，得到经验决策风险
+\[
+ R_A(\tau)=\frac{1}{|A|}\sum_{i\in A}\sum_{g=1}^{G}\ell\!\left(y_{ig},s_{ig}(\tau)\right)
+          =\frac{\mathrm{FP}_A(\tau)+2\,\mathrm{FN}_A(\tau)}{|A|}.
+\]
+该目标衡量每个细胞的平均选集代价。固定模型后，各基因的预测概率和观测数据的似然都随之确定。
+调整 \(\tau\) 只改变入选集合及其代价。
+
+\textbf{求解与测试。}
+取所有不同的校准分数作为候选阈值，另加一个高于最高分的阈值 \(t_{\varnothing}\) 表示全不选。
+\[
+ \mathcal T_C=\{q_{ig}:i\in C,\;1\le g\le G\}\cup\{t_{\varnothing}\},\qquad
+ \hat\tau\in\operatorname*{arg\,min}_{\tau\in\mathcal T_C} R_C(\tau).
+\]
+将分数按降序扫描，同分的细胞与基因配对同时入选。代价并列时先选误选数较少者，再选总入选数较少者。
+固定 \(\hat\tau\) 后，在目标片报告 \(R_E(\hat\tau)\)。例如，以 Rep1 为源片、随机种子为 42 时，
+同一模型的原阈值为 \(0.22\)，中性校准后约为 \(0.476265\)，在 Rep2 测试集上每细胞平均代价为 \(42.5918\)。
+\end{document}
